@@ -1,0 +1,21 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.secure-chat</groupId>
+        <artifactId>secure-chat-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>message-db</artifactId>
+
+    <build>
+        <sourceDirectory>main</sourceDirectory>
+        <testSourceDirectory>tests</testSourceDirectory>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+</project>

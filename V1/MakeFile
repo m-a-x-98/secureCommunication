@@ -1,0 +1,29 @@
+.PHONY: all build-cpp build-java build-all test-all clean clean-cpp clean-java clean-all clean-test-all
+
+all: test-all
+
+build-cpp:
+	cd src/cpp && cmake --preset default && cmake --build --preset debug
+
+build-java:
+	cd src/java && mvn install
+
+build-all: build-cpp build-java
+
+test-all: build-all
+	cd build && ctest -C Debug
+	cd src/java && mvn test
+
+clean-cpp:
+	cd src/cpp && cmake --build --preset debug --target clean
+
+clean-java:
+	cd src/java && mvn clean
+
+clean: clean-cpp clean-java
+
+clean-all: clean build-all
+
+clean-test-all: clean-all
+	cd build && ctest -C Debug
+	cd src/java && mvn test

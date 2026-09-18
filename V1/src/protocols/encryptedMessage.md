@@ -1,0 +1,1 @@
+For AES-256-GCM Encryption the nonce will be stored as the first crypto_secretbox_NONCEBYTES bytes, next the salt will be stored as the next crypto_pwhash_SALTBYTES bytes. Then the encrypted message will follow.  
