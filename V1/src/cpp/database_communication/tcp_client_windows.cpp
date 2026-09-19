@@ -3,6 +3,14 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
+#include <vector>
+
+using ByteBuffer = std::vector<uint8_t>;
+
+
+// At some point needs to encrypt the TCP packets and add integrity - can be done using AES-256-GCM
+// For an encryption key for this, just generate some crazy key with the pad generator and save it to a admin read only file shared between cpp and java 
+
 
 
 
@@ -79,4 +87,48 @@ int TCP_client_windows::receive_msg(std::string* msg_buffer){
     }
     msg_buffer->assign(buffer);
     return 0;
+}
+
+
+
+
+// Constructing messages, can be moved to a separate file
+// Append helpers — each knows how to serialize one field type
+inline void appendByte(ByteBuffer& buf, uint8_t value) {
+    buf.push_back(value);
+}
+
+inline void appendUint16(ByteBuffer& buf, uint16_t value) {
+    buf.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
+    buf.push_back(static_cast<uint8_t>(value & 0xFF));
+}
+
+inline void appendUint32(ByteBuffer& buf, uint32_t value) {
+    for (int i = 3; i >= 0; --i) {
+        buf.push_back(static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+    }
+}
+
+inline void appendUint64(ByteBuffer& buf, uint64_t value) {
+    for (int i = 7; i >= 0; --i) {
+        buf.push_back(static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+    }
+}
+
+inline void appendBytes(ByteBuffer& buf, const ByteBuffer& data) {
+    buf.insert(buf.end(), data.begin(), data.end());
+}
+
+inline void appendString(ByteBuffer& buf, const std::string& s) {
+    buf.insert(buf.end(), s.begin(), s.end());
+}
+
+
+ByteBuffer buildAuthenticateMessage(const std::string& username, const std::string& password) {
+    ByteBuffer msg;
+    appendByte(msg, 0x02); // message type
+    appendUint16(msg, username.size()); // add the username size
+    appendString(msg, username);
+    appendString(msg, password);
+    return msg;
 }
