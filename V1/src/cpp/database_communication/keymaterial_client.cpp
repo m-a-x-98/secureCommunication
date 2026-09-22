@@ -2,55 +2,91 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <memory>
+#include <stdexcept>
+
+#include "tcp_client.hpp"
+#include "message_builders.hpp"
 
 
 // Need to define a package protocol - and encrypt all data (dont need to do this at once) 
 
 
-KeyMaterialClient::KeyMaterialClient(const std::string& host, uint16_t port, const std::string& username, const std::string& password) : username(username){
+KeyMaterialClient::KeyMaterialClient(std::unique_ptr<TCP_client> client,
+                                     const std::string& username, 
+                                     const std::string& password) 
+                                     : client(std::move(client)), username(username){
     
-    
-    // See this: https://medium.com/@v21it039/tcp-server-in-c-window-fdb40ecd585c
-
-
-    authenticated = false;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == INVALID_SOCKET) {
-        return;
-    }
+    client->tcp_connect(username, password);
 }
 KeyMaterialClient::~KeyMaterialClient(){
-
+    client->~TCP_client();
 }
 
-bool authenticate(const std::string& username, const std::string& password){
-    // Send password to the java client which will authenticate it - should probably be the first message sent to the client
+
+void KeyMaterialClient::storeKeyMaterial(const ByteBuffer& keyMaterial){
+    ByteBuffer reply;
+    try {
+        ByteBuffer msg = buildStoreKeyMessage(username, keyMaterial);
+        sendAndReceive(msg);
+    }
+    catch(const std::exception& e) {
+        
+    }
 }
-
-void KeyMaterialClient::storeKeyMaterial(const std::vector<uint8_t>& keyMaterial){
-
-}
-std::vector<uint8_t> KeyMaterialClient::getKeyMaterial(){
-
+ByteBuffer KeyMaterialClient::getKeyMaterial(){
+    ByteBuffer reply;
+    try {
+        ByteBuffer msg = buildGetKeyMessage(username);
+        reply = sendAndReceive(msg);
+    }
+    catch(const std::exception& e) {
+        
+    }
+    ByteBuffer key_material;
+    key_material.assign(reply.begin() + 5, reply.end());
+    return key_material;
 }
 
 void KeyMaterialClient::updatePadPosition(uint64_t position){
-
+    ByteBuffer reply;
+    try {
+        ByteBuffer msg = buildUpdatePosMessage(username, position);
+        reply = sendAndReceive(msg);
+    }
+    catch(const std::exception& e) {
+        
+    }
 }
 uint64_t KeyMaterialClient::getPadPosition(){
-
+    ByteBuffer reply;
+    try {
+        ByteBuffer msg = buildGetPosMessage(username);
+        reply = sendAndReceive(msg);
+    }
+    catch(const std::exception& e) {
+        
+    }
+    uint64_t key_len = reply[5];
+    return key_len;
 }
 
-void KeyMaterialClient::updatePadSize(uint64_t size){
+ByteBuffer KeyMaterialClient::sendAndReceive(const ByteBuffer& request){
+    if (client->send_msg(request) != 0) {
+        throw std::runtime_error("Failed to send message");
+    }
+    ByteBuffer response;
+    if (client->receive_msg(&response) != 0) {
+        throw std::runtime_error("Failed to receive response");
+    }
+    if (response.empty()) {
+        throw std::runtime_error("Empty response");
+    }
 
-}
-uint64_t KeyMaterialClient::getPadSize(){
+    // Handle errors
+    if (response[0] == 0x01) {
+        throw std::runtime_error("Got an error back");
+    }
 
-}
-
-void KeyMaterialClient::sendRequest(uint8_t messageType, const std::vector<uint8_t>& payload){
-
-}
-std::vector<uint8_t> KeyMaterialClient::readResponse(){
-
+    return response; // caller strips header/parses payload as needed
 }

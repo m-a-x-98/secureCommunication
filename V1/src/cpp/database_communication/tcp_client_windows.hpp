@@ -4,12 +4,14 @@
 #include <string>
 
 #include "tcp_client.hpp"
+#include "types.hpp"
+
 
 
 class TCP_client_windows : public TCP_client{
 private:
     const int port;
-    const std::string& dest_ip;
+    const std::string dest_ip;
 
     WSADATA wsa_data;
     SOCKET connectsocket;
@@ -18,6 +20,6 @@ public:
     TCP_client_windows(std::string& dest_addr, int port);
     ~TCP_client_windows();
     int tcp_connect(const std::string& usr_name, const std::string& password);
-    int send_msg(const std::string& send_message);
-    int receive_msg(std::string* msg_buffer);
+    int send_msg(const ByteBuffer& send_message);
+    int receive_msg(ByteBuffer* msg_buffer);
 };

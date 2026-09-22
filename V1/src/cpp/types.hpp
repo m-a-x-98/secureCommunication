@@ -1,6 +1,11 @@
-#include <cstring>
-
 #pragma once
+
+#include <cstring>
+#include <vector>
+#include <cstdint>
+
+using ByteBuffer = std::vector<uint8_t>;
+
 
 class Message{
     char* data;

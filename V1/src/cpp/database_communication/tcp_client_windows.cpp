@@ -1,11 +1,13 @@
-#include "tcp_client_windows.hpp"
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
 #include <vector>
 
-using ByteBuffer = std::vector<uint8_t>;
+#include "tcp_client_windows.hpp"
+#include "message_builders.hpp"
+#include "types.hpp"
+
+
 
 
 // At some point needs to encrypt the TCP packets and add integrity - can be done using AES-256-GCM
@@ -58,16 +60,27 @@ int TCP_client_windows::tcp_connect(const std::string& usr_name, const std::stri
     }
     // Server is now connected, time to authenticate the user
 
-    std::string frame;
+    ByteBuffer authMsg = buildAuthenticateMessage(usr_name, password);
+    if (send_msg(authMsg) != 0) {
+        return 1;
+    }
+
+    ByteBuffer response;
+    if (receive_msg(&response) != 0) {
+        return 1;
+    }
+    if (response.empty() || response[0] != 0x00) {
+        return 1; // authentication failed
+    }
 
     return 0;
 }
-int TCP_client_windows::send_msg(const std::string& send_message){
+int TCP_client_windows::send_msg(const ByteBuffer& send_message){
     int msg_sent = 0;
     int msg_size = send_message.size();
     while (msg_sent < msg_size){
-        int sent = send(connectsocket, send_message.c_str(), msg_size - msg_sent, 0);
-        if (sent = SOCKET_ERROR){
+        int sent = send(connectsocket, (char*)send_message.data() + msg_sent, msg_size - msg_sent, 0);
+        if (sent == SOCKET_ERROR){
             wprintf(L"send function failed with error: %ld\n", WSAGetLastError());
             return 1;
         }
@@ -75,60 +88,16 @@ int TCP_client_windows::send_msg(const std::string& send_message){
     }
     return 0;
 }
-int TCP_client_windows::receive_msg(std::string* msg_buffer){
+int TCP_client_windows::receive_msg(ByteBuffer* msg_buffer){
     char buffer[4096];
     int received = recv(connectsocket, buffer, sizeof(buffer), 0);
     if (received == SOCKET_ERROR){
         wprintf(L"receive function failed with error: %ld\n", WSAGetLastError());
         return 2;
     }
-    if (received == 0){
+    if (received == 0 || received != buffer[1]){
         return 1;
     }
-    msg_buffer->assign(buffer);
+    msg_buffer->assign(buffer, buffer + received);
     return 0;
-}
-
-
-
-
-// Constructing messages, can be moved to a separate file
-// Append helpers — each knows how to serialize one field type
-inline void appendByte(ByteBuffer& buf, uint8_t value) {
-    buf.push_back(value);
-}
-
-inline void appendUint16(ByteBuffer& buf, uint16_t value) {
-    buf.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
-    buf.push_back(static_cast<uint8_t>(value & 0xFF));
-}
-
-inline void appendUint32(ByteBuffer& buf, uint32_t value) {
-    for (int i = 3; i >= 0; --i) {
-        buf.push_back(static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
-    }
-}
-
-inline void appendUint64(ByteBuffer& buf, uint64_t value) {
-    for (int i = 7; i >= 0; --i) {
-        buf.push_back(static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
-    }
-}
-
-inline void appendBytes(ByteBuffer& buf, const ByteBuffer& data) {
-    buf.insert(buf.end(), data.begin(), data.end());
-}
-
-inline void appendString(ByteBuffer& buf, const std::string& s) {
-    buf.insert(buf.end(), s.begin(), s.end());
-}
-
-
-ByteBuffer buildAuthenticateMessage(const std::string& username, const std::string& password) {
-    ByteBuffer msg;
-    appendByte(msg, 0x02); // message type
-    appendUint16(msg, username.size()); // add the username size
-    appendString(msg, username);
-    appendString(msg, password);
-    return msg;
 }
