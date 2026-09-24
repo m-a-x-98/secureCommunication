@@ -16,58 +16,43 @@ KeyMaterialClient::KeyMaterialClient(std::unique_ptr<TCP_client> client,
                                      const std::string& username, 
                                      const std::string& password) 
                                      : client(std::move(client)), username(username){
-    
-    client->tcp_connect(username, password);
+    if (client->tcp_connect(username, password) != 0) {
+        throw std::runtime_error("Failed to connect/authenticate as user: " + username);
+    }
 }
-KeyMaterialClient::~KeyMaterialClient(){
-    client->~TCP_client();
-}
+KeyMaterialClient::~KeyMaterialClient(){}
 
 
 void KeyMaterialClient::storeKeyMaterial(const ByteBuffer& keyMaterial){
-    ByteBuffer reply;
-    try {
-        ByteBuffer msg = buildStoreKeyMessage(username, keyMaterial);
-        sendAndReceive(msg);
-    }
-    catch(const std::exception& e) {
-        
-    }
+    ByteBuffer msg = buildStoreKeyMessage(username, keyMaterial);
+    sendAndReceive(msg);
 }
 ByteBuffer KeyMaterialClient::getKeyMaterial(){
     ByteBuffer reply;
-    try {
-        ByteBuffer msg = buildGetKeyMessage(username);
-        reply = sendAndReceive(msg);
-    }
-    catch(const std::exception& e) {
-        
-    }
+    
+    ByteBuffer msg = buildGetKeyMessage(username);
+    reply = sendAndReceive(msg);
+
     ByteBuffer key_material;
     key_material.assign(reply.begin() + 5, reply.end());
     return key_material;
 }
 
-void KeyMaterialClient::updatePadPosition(uint64_t position){
-    ByteBuffer reply;
-    try {
-        ByteBuffer msg = buildUpdatePosMessage(username, position);
-        reply = sendAndReceive(msg);
-    }
-    catch(const std::exception& e) {
-        
-    }
+void KeyMaterialClient::updatePadPosition(uint64_t offset){
+    ByteBuffer msg = buildUpdatePosMessage(username, offset);
+    sendAndReceive(msg);
 }
 uint64_t KeyMaterialClient::getPadPosition(){
     ByteBuffer reply;
-    try {
-        ByteBuffer msg = buildGetPosMessage(username);
-        reply = sendAndReceive(msg);
-    }
-    catch(const std::exception& e) {
-        
-    }
-    uint64_t key_len = reply[5];
+    
+    ByteBuffer msg = buildGetPosMessage(username);
+    reply = sendAndReceive(msg);
+
+    int header_size = 5;
+    uint32_t key_len = (static_cast<uint32_t>(reply[header_size]) << 24) |
+                       (static_cast<uint32_t>(reply[header_size+1]) << 16) |
+                       (static_cast<uint32_t>(reply[header_size+2]) << 8)  |
+                        static_cast<uint32_t>(reply[header_size+3]);
     return key_len;
 }
 

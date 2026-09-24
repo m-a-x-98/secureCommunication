@@ -89,15 +89,43 @@ int TCP_client_windows::send_msg(const ByteBuffer& send_message){
     return 0;
 }
 int TCP_client_windows::receive_msg(ByteBuffer* msg_buffer){
-    char buffer[4096];
-    int received = recv(connectsocket, buffer, sizeof(buffer), 0);
-    if (received == SOCKET_ERROR){
-        wprintf(L"receive function failed with error: %ld\n", WSAGetLastError());
-        return 2;
+    const size_t header_size = 5;
+    uint8_t header[header_size];
+    int total_received = 0;
+    while (total_received < header_size){
+        int received = recv(connectsocket, (char*)header + total_received, sizeof(header) - total_received, 0);
+        if (received == SOCKET_ERROR){
+            wprintf(L"receive function failed with error: %ld\n", WSAGetLastError());
+            return 2;
+        }
+        if (received == 0){
+            return 1;
+        }
+        total_received += received;
     }
-    if (received == 0 || received != buffer[1]){
-        return 1;
+    uint32_t payload_len = get_payload_len(header);
+    ByteBuffer payload(payload_len);
+    total_received = 0;
+    while (total_received < payload_len){
+        int received = recv(connectsocket, (char*)payload.data() + total_received, payload_len - total_received, 0);
+        if (received == SOCKET_ERROR){
+            wprintf(L"receive function failed with error: %ld\n", WSAGetLastError());
+            return 2;
+        }
+        if (received == 0){
+            return 1;
+        }
+        total_received += received;
     }
-    msg_buffer->assign(buffer, buffer + received);
+    msg_buffer->assign(header, header + 5);
+    msg_buffer->insert(msg_buffer->end(), payload.begin(), payload.end());
     return 0;
+}
+
+uint32_t TCP_client_windows::get_payload_len(const uint8_t buffer[]){
+    uint32_t payload_len = (static_cast<uint32_t>(buffer[1]) << 24) |
+                           (static_cast<uint32_t>(buffer[2]) << 16) |
+                           (static_cast<uint32_t>(buffer[3]) << 8)  |
+                            static_cast<uint32_t>(buffer[4]);
+    return payload_len;
 }

@@ -16,6 +16,8 @@ private:
     WSADATA wsa_data;
     SOCKET connectsocket;
     sockaddr_in clientService;
+
+    uint32_t get_payload_len(const uint8_t buffer[]);
 public:
     TCP_client_windows(std::string& dest_addr, int port);
     ~TCP_client_windows();
