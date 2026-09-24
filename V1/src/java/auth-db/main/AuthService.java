@@ -1,4 +1,6 @@
 
+// Maybe add such that non of the methods work unless verifyLogin has been called
+
 public interface AuthService {
     public void createUser(String username, String password) throws UserAlreadyExistsException;
     public boolean verifyLogin(String username, String password);
