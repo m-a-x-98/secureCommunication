@@ -101,16 +101,23 @@ public class KeyMaterialServer {
                 outPayload = new byte[0];
                 break;
             case 0x03: // case 0x02 already handled
-                
+                int ret1 = storeKeyMaterialPayload(inPayload);
+                if (ret1 != 0) return null;
+                else outPayload = MessageCodec.createConfirmationPayload();  
                 break;
             case 0x04:
-                
+                outPayload = getKeyMaterialPayload(inPayload);
                 break;
             case 0x05:
-                
+                int ret2 = updatePadPositionPayload(inPayload);
+                if (ret2 != 0) return null;
+                else outPayload = MessageCodec.createConfirmationPayload(); 
                 break;
             case 0x06:
-                
+                outPayload = getPadPositionPayload(inPayload);
+                break;
+            case 0x07:
+                outPayload = getPadSizePayload(inPayload);
                 break;
         
             default:
@@ -126,7 +133,64 @@ public class KeyMaterialServer {
         out.flush();
     }
 
-    private int writeError(DataOutputStream out){
+    private int storeKeyMaterialPayload(byte[] payload){
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        MsgBytes keyMaterial = MessageCodec.readMessageBytesOffset(payload, username.end_pos);
+
+        try {
+            authService.storeEncryptedKeyMaterial(username.entry, keyMaterial.entry);
+        } catch (Exception e){
+            return 1;
+        }
+        return 0;
+    }
+
+    private byte[] getKeyMaterialPayload(byte[] payload){
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        byte[] encryptedKey;
+        try {
+            encryptedKey = authService.getEncryptedKeyMaterial(username.entry);
+        } catch (Exception e){
+            return null;
+        }
+        return MessageCodec.createPayload(encryptedKey);
+    }
+
+    private int updatePadPositionPayload(byte[] payload){
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        long position = MessageCodec.readLongAt(payload, username.end_pos);
+
+        try {
+            authService.updatePadPosition(username.entry, position);
+        } catch (Exception e){
+            return 1;
+        }
+        return 0;
+    }
+
+    private byte[] getPadPositionPayload(byte[] payload){
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        long padPos;
+        try {
+            padPos = authService.getPadState(username.entry);
+        } catch (Exception e){
+            return null;
+        }
+        return MessageCodec.createPayload(MessageCodec.longToByteArray(padPos));
+    }
+
+    private byte[] getPadSizePayload(byte[] payload){
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        long padSize;
+        try {
+            padSize = authService.getPadSize(username.entry);
+        } catch (Exception e){
+            return null;
+        }
+        return MessageCodec.createPayload(MessageCodec.longToByteArray(padSize));
+    }
+
+    private static final int writeError(DataOutputStream out){
 
 
         // exception can be passed as argument and be used to send specific error codes to the client 
@@ -141,4 +205,81 @@ public class KeyMaterialServer {
         }
         return 0;
     }
+}
+
+class MsgEntry{
+    String entry;
+    int end_pos;
+    MsgEntry(String entry, int end_pos){
+        this.entry = entry;
+        this.end_pos = end_pos;
+    }
+}
+
+class MsgBytes{
+    byte[] entry;
+    int end_pos;
+    MsgBytes(byte[] entry, int end_pos){
+        this.entry = entry;
+        this.end_pos = end_pos;
+    }
+}
+
+class MessageCodec {
+    static MsgEntry readMessageOffset(byte[] payload, int offset){
+        int idxCounter = offset;
+        int entryLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff); // 2 first bytes are username len
+        byte[] entryBytes = Arrays.copyOfRange(payload, idxCounter, entryLen+idxCounter);
+        String entry = new String(entryBytes, StandardCharsets.UTF_8);
+        return new MsgEntry(entry, idxCounter + entryLen);
+    }
+
+    static MsgBytes readMessageBytesOffset(byte[] payload, int offset){
+        int idxCounter = offset;
+        int entryLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff);
+        byte[] entryBytes = Arrays.copyOfRange(payload, idxCounter, entryLen + idxCounter);
+        return new MsgBytes(entryBytes, idxCounter + entryLen);
+    }
+
+    static byte[] createConfirmationPayload(){
+        byte[] msg = {0};
+        return msg;
+    }
+
+    static byte[] createPayload(byte[] msg){
+        int msgLen = msg.length;
+        byte outMsg[] = new byte[4 + msgLen];
+        System.arraycopy(intToByteArray(msgLen), 0, outMsg, 0, 4);
+        System.arraycopy(msg, 0, outMsg, 4, msgLen);
+        return outMsg;
+    }
+
+    static byte[] intToByteArray(int value) {
+        return new byte[] {
+                (byte)(value >>> 24),
+                (byte)(value >>> 16),
+                (byte)(value >>> 8),
+                (byte)value};
+    }
+
+    static byte[] longToByteArray(long value) {
+        return new byte[] {
+                (byte)(value >>> 56),
+                (byte)(value >>> 48),
+                (byte)(value >>> 40),
+                (byte)(value >>> 32),
+                (byte)(value >>> 24),
+                (byte)(value >>> 16),
+                (byte)(value >>> 8),
+                (byte)value};
+    }
+
+    static long readLongAt(byte[] buf, int offset) {
+        long value = 0;
+        for (int i = 0; i < 8; i++) {
+            value = (value << 8) | (buf[offset + i] & 0xff);
+        }
+        return value;
+    }
+
 }

@@ -17,3 +17,4 @@ Store key material (0x03):  [2 byte, username size in bytes][username][2 byte, k
 Get key material (0x04):    [2 byte, username size in bytes][username]
 Update pad position (0x05): [2 byte, username size in bytes][username][offset, 8 bytes]
 Get pad position (0x06):    [2 byte, username size in bytes][username]
+Get pad size (0x07):        [2 byte, username size in bytes][username]
