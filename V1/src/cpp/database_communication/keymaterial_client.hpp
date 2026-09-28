@@ -39,6 +39,8 @@ public:
      */
     uint64_t getPadPosition();
 
+    uint64_t getPadSize();
+
 private:
     std::unique_ptr<TCP_client> client;
     std::string username;

@@ -55,6 +55,20 @@ uint64_t KeyMaterialClient::getPadPosition(){
                         static_cast<uint32_t>(reply[header_size+3]);
     return key_len;
 }
+uint64_t KeyMaterialClient::getPadPosition(){
+    ByteBuffer reply;
+    
+    ByteBuffer msg = buildGetPadSizeMessage(username);
+    reply = sendAndReceive(msg);
+
+    int header_size = 5;
+    uint32_t key_len = (static_cast<uint32_t>(reply[header_size]) << 24) |
+                       (static_cast<uint32_t>(reply[header_size+1]) << 16) |
+                       (static_cast<uint32_t>(reply[header_size+2]) << 8)  |
+                        static_cast<uint32_t>(reply[header_size+3]);
+    return key_len;
+}
+
 
 ByteBuffer KeyMaterialClient::sendAndReceive(const ByteBuffer& request){
     if (client->send_msg(request) != 0) {
