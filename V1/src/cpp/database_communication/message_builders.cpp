@@ -51,3 +51,10 @@ ByteBuffer buildGetPosMessage(const std::string& username){
     appendString(msg, username);
     return msg;
 }
+
+ByteBuffer buildGetPadSizeMessage(const std::string& username){
+    ByteBuffer msg;
+    appendByte(msg, 0x07); // message type
+    appendString(msg, username);
+    return msg;
+}

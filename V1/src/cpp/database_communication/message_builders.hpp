@@ -47,3 +47,4 @@ ByteBuffer buildStoreKeyMessage(const std::string& username, const std::string& 
 ByteBuffer buildGetKeyMessage(const std::string& username);
 ByteBuffer buildUpdatePosMessage(const std::string& username, const uint64_t offset);
 ByteBuffer buildGetPosMessage(const std::string& username);
+ByteBuffer buildGetPadSizeMessage(const std::string& username);
