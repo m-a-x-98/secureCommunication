@@ -16,7 +16,7 @@ KeyMaterialClient::KeyMaterialClient(std::unique_ptr<TCP_client> client,
                                      const std::string& username, 
                                      const std::string& password) 
                                      : client(std::move(client)), username(username){
-    if (client->tcp_connect(username, password) != 0) {
+    if (this->client->tcp_connect(username, password) != 0) {
         throw std::runtime_error("Failed to connect/authenticate as user: " + username);
     }
 }

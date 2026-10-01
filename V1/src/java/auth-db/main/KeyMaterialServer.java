@@ -34,16 +34,21 @@ public class KeyMaterialServer {
             DataInputStream in = new DataInputStream(client.getInputStream());
             DataOutputStream out = new DataOutputStream(client.getOutputStream())){
 
+
+
             int firstType = in.readUnsignedByte();
             if (firstType != 0x02){
                 writeError(out);
                 return;
             }
+
             String username = authenticateAndGetUsername(in, out);
             if (username == null) {
                 writeError(out);
                 return;
             }
+            writeSuccess(out);
+            
 
             while (!client.isClosed()) {
                 int msgType = in.readUnsignedByte();
@@ -71,6 +76,7 @@ public class KeyMaterialServer {
         String username;
         try{
             int payloadLen = in.readInt();
+
             byte[] payload = new byte[payloadLen];
             in.readFully(payload);
 
@@ -79,7 +85,7 @@ public class KeyMaterialServer {
             byte[] usernameBytes = Arrays.copyOfRange(payload, idxCounter, usernameLen+idxCounter);
             username = new String(usernameBytes, StandardCharsets.UTF_8);
             idxCounter += usernameLen;
-            
+
             int passwordLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff);
             byte[] passwordBytes = Arrays.copyOfRange(payload, idxCounter, idxCounter+passwordLen);
             String password = new String(passwordBytes, StandardCharsets.UTF_8);
@@ -205,6 +211,17 @@ public class KeyMaterialServer {
         }
         return 0;
     }
+
+    private static final int writeSuccess(DataOutputStream out){
+        try {
+            out.writeByte(0x00);
+            out.writeInt(0);
+            out.flush();
+        } catch (Exception e){
+            return 1;
+        }
+        return 0;
+    }
 }
 
 class MsgEntry{
@@ -248,8 +265,7 @@ class MessageCodec {
 
     static byte[] createPayload(byte[] msg){
         int msgLen = msg.length;
-        byte outMsg[] = new byte[4 + msgLen];
-        System.arraycopy(intToByteArray(msgLen), 0, outMsg, 0, 4);
+        byte outMsg[] = new byte[msgLen];
         System.arraycopy(msg, 0, outMsg, 4, msgLen);
         return outMsg;
     }

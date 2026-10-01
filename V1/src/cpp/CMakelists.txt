@@ -23,6 +23,7 @@ target_sources(test_main PRIVATE
     tests/encryption_tests.cpp
     tests/types_tests.cpp
     tests/inputhelpers_tests.cpp
+    tests/database_communication_tests.cpp
     encryption/encryptionService.cpp
     encryption/encryptionEngine.cpp
     helpers/inputhelpers.cpp
