@@ -14,4 +14,6 @@ public:
 
 private:
     KeyMaterialClient& client;
+    uint64_t pad_position;
+    uint64_t pad_size;
 };

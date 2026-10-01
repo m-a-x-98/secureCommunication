@@ -16,6 +16,7 @@ target_link_libraries(sodium INTERFACE
 )
 
 add_executable(test_main)
+target_compile_options(test_main PRIVATE -Wall -Wextra -Wconversion)
 enable_testing()
 add_test(NAME test_main COMMAND test_main)
 target_sources(test_main PRIVATE

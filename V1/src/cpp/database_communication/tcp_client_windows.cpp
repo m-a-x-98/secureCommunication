@@ -16,7 +16,7 @@
 
 
 
-TCP_client_windows::TCP_client_windows(std::string& dest_ip, int port) : port(port), dest_ip(dest_ip){
+TCP_client_windows::TCP_client_windows(std::string& dest_ip, u_short port) : port(port), dest_ip(dest_ip){
     // Initialize winsock 
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsa_data);
     if (iResult != NO_ERROR) {

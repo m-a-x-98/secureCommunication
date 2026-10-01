@@ -10,7 +10,7 @@
 
 class TCP_client_windows : public TCP_client{
 private:
-    const int port;
+    const u_short port;
     const std::string dest_ip;
 
     WSADATA wsa_data;
@@ -19,7 +19,7 @@ private:
 
     uint32_t get_payload_len(const uint8_t buffer[]);
 public:
-    TCP_client_windows(std::string& dest_addr, int port);
+    TCP_client_windows(std::string& dest_addr, u_short port);
     ~TCP_client_windows();
     int tcp_connect(const std::string& usr_name, const std::string& password);
     int send_msg(const ByteBuffer& send_message);

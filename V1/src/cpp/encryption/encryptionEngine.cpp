@@ -6,14 +6,14 @@ int key_index = 0;
 
 void perfectEncrypt(Message& msg){
     for (char& c : msg){
-        c ^ key[key_index++]; 
+        c ^= key[key_index++]; 
     }
 }
 
 void perfectDecrypt(Message& msg){
     int i = 0;
     for (char& c : msg){
-        c ^ key[msg.encryption_index + i++];
+        c ^= key[msg.encryption_index + i++];
     }    
 }
 

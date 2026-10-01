@@ -17,7 +17,7 @@ public:
     // Constructors
     Message();
     Message(const char* str);
-    Message(const char* str, int len);
+    Message(const char* str, size_t len);
     // Copy
     Message(const Message& msg);
     // Move

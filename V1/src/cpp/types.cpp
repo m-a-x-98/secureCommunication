@@ -8,7 +8,7 @@ Message::Message(const char* str) : encryption_index(0){
     data[len] = '\0';
 }
 
-Message::Message(const char* str, int len) : len(len), encryption_index(0){
+Message::Message(const char* str, size_t len) : len(len), encryption_index(0){
     data = new char[len + 1];
     std::memcpy(data, str ? str : "", len);
     data[len] = '\0';
