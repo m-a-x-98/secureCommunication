@@ -1,5 +1,10 @@
+#pragma once
+
+#include <stdexcept>
+#include <string>
+
 class PadExhaustedException : public std::runtime_error {
 public:
-    PadExhaustedException(char const* const message) throw();
-    virtual char const* what() const throw();
+    explicit PadExhaustedException(const std::string& message)
+        : std::runtime_error(message) {}
 };

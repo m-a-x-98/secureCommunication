@@ -2,7 +2,5 @@
 
 #include "types.hpp"
 
-void perfectEncrypt(Message& msg);
-void perfectDecrypt(Message& msg);
-
-int check_perfect_encrypt_decrypt();
+void perfectEncrypt(Message& msg, ByteBuffer key);
+void perfectDecrypt(Message& msg, ByteBuffer key);

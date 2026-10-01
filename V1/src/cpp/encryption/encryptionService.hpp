@@ -2,6 +2,7 @@
 
 #include "types.hpp"
 #include "sodium.h"
+#include "padallocator.hpp"
 #include <memory>
 #include <string>
 
@@ -14,21 +15,24 @@ public:
 
 class perfectEncryption : public IencryptionService{
 private:
-    char* key;
-    int key_index;
-    int key_len;
+    ByteBuffer key;
+    size_t key_len;
+    PadAllocator pad_allocator;
 
     std::string usr_name;
     std::string password;
     std::unique_ptr<IencryptionService> encryptor;
 
 public:
+    perfectEncryption(PadAllocator pad_allocator);
     ~perfectEncryption() override;
 
     void createKey();
     void login();
     void encrypt(Message& msg) override;
     void decrypt(Message& msg) override;
+
+    ByteBuffer read_pad_slice(size_t start_offset, size_t slice_len);
 
     std::string get_usr_name() const;
 };

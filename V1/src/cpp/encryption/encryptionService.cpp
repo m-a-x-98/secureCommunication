@@ -4,12 +4,15 @@
 #include "doctest.h"
 #include "sodium.h"
 #include "types.hpp"
+
 #include <iostream>
 #include <memory>
 #include <limits>
 #include <string>
 #include <vector>
 #include <stdexcept>
+
+perfectEncryption::perfectEncryption(PadAllocator pad_allocator) : pad_allocator(pad_allocator) {}
 
 perfectEncryption::~perfectEncryption() = default;
 
@@ -57,15 +60,22 @@ void perfectEncryption::login(){
     // Decrypt the key and store it in the private variable key (check if this is secure, since this memory could technically be discted)
 }
 void perfectEncryption::encrypt(Message& msg){
-    perfectEncrypt(msg);
+    uint64_t key_index = pad_allocator.reservePadRange(msg.get_len());
+    ByteBuffer pad_slice = read_pad_slice(key_index, msg.get_len());
+    perfectEncrypt(msg, pad_slice);
 }
 void perfectEncryption::decrypt(Message& msg){
-    perfectDecrypt(msg);
+    perfectDecrypt(msg, index);
+}
+
+ByteBuffer perfectEncryption::read_pad_slice(size_t start_offset, size_t slice_len){
+    return ByteBuffer(key.begin() + start_offset, key.end() + start_offset + slice_len);
 }
 
 std::string perfectEncryption::get_usr_name() const{
     return usr_name;
 }
+
 
 
 AES256GCMEncryption::AES256GCMEncryption(std::string& password) : password(password){}

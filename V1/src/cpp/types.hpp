@@ -10,6 +10,7 @@ using ByteBuffer = std::vector<uint8_t>;
 class Message{
     char* data;
     size_t len;
+    size_t pad_start_offset;
 
 public:
     int encryption_index;
@@ -41,6 +42,8 @@ public:
 
     const_iterator cbegin() const { return data; }
     const_iterator cend()   const { return data + len; }
+
+    void update_bit(size_t index, uint8_t val);
 
     // Methods 
     bool equals_string(const char* msg) const;

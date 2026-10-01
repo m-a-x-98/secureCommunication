@@ -60,6 +60,10 @@ Message& Message::operator=(Message&& msg) noexcept{
 }
 
 
+void Message::update_bit(size_t index, uint8_t val){
+    data[index] = val;
+}
+
 
 bool Message::equals_string(const char* msg) const{
     return std::strcmp(msg, data) == 0;
