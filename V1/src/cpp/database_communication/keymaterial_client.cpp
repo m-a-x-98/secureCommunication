@@ -7,6 +7,7 @@
 
 #include "tcp_client.hpp"
 #include "message_builders.hpp"
+#include "byte_reader.hpp"
 
 
 // Need to define a package protocol - and encrypt all data (dont need to do this at once) 
@@ -42,30 +43,20 @@ void KeyMaterialClient::updatePadPosition(uint64_t offset){
     ByteBuffer msg = buildUpdatePosMessage(username, offset);
     sendAndReceive(msg);
 }
-uint64_t KeyMaterialClient::getPadPosition(){
-    ByteBuffer reply;
-    
+uint64_t KeyMaterialClient::getPadPosition(){    
     ByteBuffer msg = buildGetPosMessage(username);
-    reply = sendAndReceive(msg);
+    ByteBuffer reply = sendAndReceive(msg);
 
-    int header_size = 5;
-    uint32_t key_len = (static_cast<uint32_t>(reply[header_size]) << 24) |
-                       (static_cast<uint32_t>(reply[header_size+1]) << 16) |
-                       (static_cast<uint32_t>(reply[header_size+2]) << 8)  |
-                        static_cast<uint32_t>(reply[header_size+3]);
+    // Start at the header size
+    uint64_t key_len = readUint64BE(reply, 5);
     return key_len;
 }
 uint64_t KeyMaterialClient::getPadSize(){
-    ByteBuffer reply;
-    
     ByteBuffer msg = buildGetPadSizeMessage(username);
-    reply = sendAndReceive(msg);
+    ByteBuffer reply = sendAndReceive(msg);
 
-    int header_size = 5;
-    uint32_t key_len = (static_cast<uint32_t>(reply[header_size]) << 24) |
-                       (static_cast<uint32_t>(reply[header_size+1]) << 16) |
-                       (static_cast<uint32_t>(reply[header_size+2]) << 8)  |
-                        static_cast<uint32_t>(reply[header_size+3]);
+    // Start at the header size
+    uint64_t key_len = readUint64BE(reply, 5);
     return key_len;
 }
 

@@ -86,9 +86,7 @@ public class keysMaterialServerTest {
 
     @Test
     void createPayloads() throws Exception{
-        byte[] msg = new byte[]{10, 20, 30};
-
-        byte[] payload = MessageCodec.createPayload(msg);
+        byte[] payload = new byte[]{10, 20, 30};
 
         // first 4 bytes: big-endian length prefix
         assertEquals(3, MessageCodec.readLongAt(padTo8(intBytesOf(payload)), 0)); // see note below
@@ -97,18 +95,17 @@ public class keysMaterialServerTest {
     // Simpler, more direct version of the length-prefix check (avoids the awkward reuse above)
     @Test
     void createPayload_lengthPrefixMatchesMessageLength() {
-        byte[] msg = new byte[]{10, 20, 30};
-        byte[] payload = MessageCodec.createPayload(msg);
+        byte[] payload = new byte[]{10, 20, 30};
 
         int prefixedLen = ((payload[0] & 0xFF) << 24) | ((payload[1] & 0xFF) << 16)
                          | ((payload[2] & 0xFF) << 8)  | (payload[3] & 0xFF);
 
-        assertEquals(msg.length, prefixedLen);
-        assertEquals(4 + msg.length, payload.length);
+        assertEquals(payload.length, prefixedLen);
+        assertEquals(4 + payload.length, payload.length);
 
-        byte[] extractedMsg = new byte[msg.length];
-        System.arraycopy(payload, 4, extractedMsg, 0, msg.length);
-        assertArrayEquals(msg, extractedMsg);
+        byte[] extractedMsg = new byte[payload.length];
+        System.arraycopy(payload, 4, extractedMsg, 0, payload.length);
+        assertArrayEquals(payload, extractedMsg);
     }
 
     @Test

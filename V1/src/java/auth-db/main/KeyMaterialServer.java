@@ -159,7 +159,7 @@ public class KeyMaterialServer {
         } catch (Exception e){
             return null;
         }
-        return MessageCodec.createPayload(encryptedKey);
+        return encryptedKey;
     }
 
     private int updatePadPositionPayload(byte[] payload){
@@ -182,7 +182,7 @@ public class KeyMaterialServer {
         } catch (Exception e){
             return null;
         }
-        return MessageCodec.createPayload(MessageCodec.longToByteArray(padPos));
+        return MessageCodec.longToByteArray(padPos);
     }
 
     private byte[] getPadSizePayload(byte[] payload){
@@ -193,7 +193,7 @@ public class KeyMaterialServer {
         } catch (Exception e){
             return null;
         }
-        return MessageCodec.createPayload(MessageCodec.longToByteArray(padSize));
+        return MessageCodec.longToByteArray(padSize);
     }
 
     private static final int writeError(DataOutputStream out){
@@ -261,13 +261,6 @@ class MessageCodec {
     static byte[] createConfirmationPayload(){
         byte[] msg = {0};
         return msg;
-    }
-
-    static byte[] createPayload(byte[] msg){
-        int msgLen = msg.length;
-        byte outMsg[] = new byte[msgLen];
-        System.arraycopy(msg, 0, outMsg, 4, msgLen);
-        return outMsg;
     }
 
     static byte[] intToByteArray(int value) {

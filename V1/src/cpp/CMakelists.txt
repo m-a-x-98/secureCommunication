@@ -23,10 +23,12 @@ target_sources(test_main PRIVATE
     tests/encryption_tests.cpp
     tests/types_tests.cpp
     tests/inputhelpers_tests.cpp
+    tests/helpers_tests.cpp
     tests/database_communication_tests.cpp
     encryption/encryptionService.cpp
     encryption/encryptionEngine.cpp
     helpers/inputhelpers.cpp
+    helpers/byte_reader.cpp
     database_communication/keymaterial_client.cpp
     database_communication/padallocator.cpp
     database_communication/tcp_client_windows.cpp
