@@ -6,14 +6,20 @@
 
 #include <sodium.h>
 #include <sstream>
+#include <iostream>
 
 TEST_CASE("perfectEncrypt/perfectDecrypt check"){
     const char* tests[5] = {"dfl", "AOIJdksijdskdaub", ")#)EJdj29jdj2",
                              "!JHNOKDFBIJD)W", "=)(U%do290dk29jHFIW(URHJNOMD))"};
     for (const char* test : tests) {
         Message msg = Message(test);
-        perfectEncrypt(msg);
-        perfectDecrypt(msg);
+
+
+        // This tests need rework 
+
+
+        perfectEncrypt(msg, ByteBuffer({0x01,0x02}));
+        perfectDecrypt(msg, ByteBuffer({0x01,0x02}));
         CHECK(msg.equals_string(test));
     }
 }

@@ -50,4 +50,6 @@ public:
     bool equals(Message& msg) const;
     char* get_msg() const;
     size_t get_len() const;
+
+    char* toString() const;
 };

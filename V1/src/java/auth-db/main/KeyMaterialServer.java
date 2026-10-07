@@ -34,8 +34,6 @@ public class KeyMaterialServer {
             DataInputStream in = new DataInputStream(client.getInputStream());
             DataOutputStream out = new DataOutputStream(client.getOutputStream())){
 
-
-
             int firstType = in.readUnsignedByte();
             if (firstType != 0x02){
                 writeError(out);
@@ -288,6 +286,7 @@ class MessageCodec {
         for (int i = 0; i < 8; i++) {
             value = (value << 8) | (buf[offset + i] & 0xff);
         }
+
         return value;
     }
 

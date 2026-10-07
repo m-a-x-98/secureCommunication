@@ -40,12 +40,20 @@ void perfectEncryption::createKey(){
     // Create the key
     unsigned char* buffer = gen_random_num(key_len);
 
+
+
+
+
     // Encrypt the key
-    Message key_msg = Message(reinterpret_cast<char*>(buffer), key_len);
-    key = key_msg.get_msg();
-    delete[] buffer;
-    encryptor->encrypt(key_msg);
-    key_msg.get_msg(); // Place this in the database 
+    // Message key_msg = Message(reinterpret_cast<char*>(buffer), key_len);
+    // key = key_msg.get_msg();
+    // delete[] buffer;
+    // encryptor->encrypt(key_msg);
+    // key_msg.get_msg(); // Place this in the database 
+
+
+
+
 
     // Save the encrypted key, key_index, key_len and encryptor_type in a database 
 }
@@ -65,7 +73,7 @@ void perfectEncryption::encrypt(Message& msg){
     perfectEncrypt(msg, pad_slice);
 }
 void perfectEncryption::decrypt(Message& msg){
-    perfectDecrypt(msg, index);
+    perfectDecrypt(msg, ByteBuffer());
 }
 
 ByteBuffer perfectEncryption::read_pad_slice(size_t start_offset, size_t slice_len){

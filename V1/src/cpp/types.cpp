@@ -80,3 +80,7 @@ size_t Message::get_len() const{
 bool Message::equals(Message& msg) const{
     return strcmp(msg.data, data) == 0 && msg.len == len && msg.encryption_index == encryption_index;
 }
+
+char* Message::toString() const {
+    return data;
+}

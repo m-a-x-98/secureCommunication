@@ -74,7 +74,7 @@ public class KeysDB implements AuthService{
     }
 
     public boolean userExists(String username){
-        String sql = "SELECT usrID FROM keys WHERE usrName = ?";
+        String sql = "SELECT usrName FROM keys WHERE usrName = ?";
 
         try (Connection usrDB = dbProvider.getConnection();
             PreparedStatement stmt = usrDB.prepareStatement(sql)) {
