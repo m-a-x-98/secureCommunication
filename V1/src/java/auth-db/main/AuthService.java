@@ -1,3 +1,4 @@
+import com.securechat.serverhelpers.*;
 
 // Maybe add such that non of the methods work unless verifyLogin has been called
 

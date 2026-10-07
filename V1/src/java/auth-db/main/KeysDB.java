@@ -7,6 +7,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 
 import com.securechat.dbconnection.ConnectionProvider;
 import com.securechat.dbconnection.SingleConnectionProvider;
+import com.securechat.serverhelpers.*;
 
 public class KeysDB implements AuthService{
     private ConnectionProvider dbProvider;
@@ -242,20 +243,3 @@ public class KeysDB implements AuthService{
     }
 }
 
-class UserAlreadyExistsException extends Exception{
-    public UserAlreadyExistsException() {}
-
-    public UserAlreadyExistsException(String usr)
-    {
-        super("User already exists: " + usr);
-    }
-}
-
-class UserDoesntExistException extends Exception{
-    public UserDoesntExistException() {}
-
-    public UserDoesntExistException(String usr)
-    {
-        super("User does not exist: " + usr);
-    }
-}

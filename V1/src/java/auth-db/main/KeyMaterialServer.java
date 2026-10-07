@@ -1,8 +1,9 @@
-
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+
+import com.securechat.serverhelpers.*;
 
 public class KeyMaterialServer {
     private final AuthService authService;
@@ -36,16 +37,16 @@ public class KeyMaterialServer {
 
             int firstType = in.readUnsignedByte();
             if (firstType != 0x02){
-                writeError(out);
+                MessageHelpers.writeError(out);
                 return;
             }
 
             String username = authenticateAndGetUsername(in, out);
             if (username == null) {
-                writeError(out);
+                MessageHelpers.writeError(out);
                 return;
             }
-            writeSuccess(out);
+            MessageHelpers.writeSuccess(out);
             
 
             while (!client.isClosed()) {
@@ -57,9 +58,9 @@ public class KeyMaterialServer {
                 try {
                     byte[] outPayload = fullfillRequest(msgType, inPayload);
                     if (outPayload == null) throw new Exception(); // Not a valid request 
-                    sendMsg(0x00, outPayload, out);
+                    MessageHelpers.sendMsg(0x00, outPayload, out);
                 } catch (Exception e) {
-                    writeError(out);
+                    MessageHelpers.writeError(out);
                 }
             }
 
@@ -130,19 +131,12 @@ public class KeyMaterialServer {
         return outPayload;
     }
 
-    private void sendMsg(int status, byte[] payload, DataOutputStream out) throws IOException{
-        out.writeByte(status);
-        out.writeInt(payload.length);
-        out.write(payload);
-        out.flush();
-    }
-
     private int storeKeyMaterialPayload(byte[] payload){
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
-        MsgBytes keyMaterial = MessageCodec.readMessageBytesOffset(payload, username.end_pos);
+        MsgBytes keyMaterial = MessageCodec.readMessageBytesOffset(payload, username.getEndPos());
 
         try {
-            authService.storeEncryptedKeyMaterial(username.entry, keyMaterial.entry);
+            authService.storeEncryptedKeyMaterial(username.getEntry(), keyMaterial.getEntry());
         } catch (Exception e){
             return 1;
         }
@@ -153,7 +147,7 @@ public class KeyMaterialServer {
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
         byte[] encryptedKey;
         try {
-            encryptedKey = authService.getEncryptedKeyMaterial(username.entry);
+            encryptedKey = authService.getEncryptedKeyMaterial(username.getEntry());
         } catch (Exception e){
             return null;
         }
@@ -162,10 +156,10 @@ public class KeyMaterialServer {
 
     private int updatePadPositionPayload(byte[] payload){
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
-        long position = MessageCodec.readLongAt(payload, username.end_pos);
+        long position = MessageCodec.readLongAt(payload, username.getEndPos());
 
         try {
-            authService.updatePadPosition(username.entry, position);
+            authService.updatePadPosition(username.getEntry(), position);
         } catch (Exception e){
             return 1;
         }
@@ -176,7 +170,7 @@ public class KeyMaterialServer {
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
         long padPos;
         try {
-            padPos = authService.getPadState(username.entry);
+            padPos = authService.getPadState(username.getEntry());
         } catch (Exception e){
             return null;
         }
@@ -187,107 +181,13 @@ public class KeyMaterialServer {
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
         long padSize;
         try {
-            padSize = authService.getPadSize(username.entry);
+            padSize = authService.getPadSize(username.getEntry());
         } catch (Exception e){
             return null;
         }
         return MessageCodec.longToByteArray(padSize);
     }
 
-    private static final int writeError(DataOutputStream out){
-
-
-        // exception can be passed as argument and be used to send specific error codes to the client 
-
-
-        try {
-            out.writeByte(0x01);
-            out.writeInt(0);
-            out.flush();
-        } catch (Exception e){
-            return 1;
-        }
-        return 0;
-    }
-
-    private static final int writeSuccess(DataOutputStream out){
-        try {
-            out.writeByte(0x00);
-            out.writeInt(0);
-            out.flush();
-        } catch (Exception e){
-            return 1;
-        }
-        return 0;
-    }
-}
-
-class MsgEntry{
-    String entry;
-    int end_pos;
-    MsgEntry(String entry, int end_pos){
-        this.entry = entry;
-        this.end_pos = end_pos;
-    }
-}
-
-class MsgBytes{
-    byte[] entry;
-    int end_pos;
-    MsgBytes(byte[] entry, int end_pos){
-        this.entry = entry;
-        this.end_pos = end_pos;
-    }
-}
-
-class MessageCodec {
-    static MsgEntry readMessageOffset(byte[] payload, int offset){
-        int idxCounter = offset;
-        int entryLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff); // 2 first bytes are username len
-        byte[] entryBytes = Arrays.copyOfRange(payload, idxCounter, entryLen+idxCounter);
-        String entry = new String(entryBytes, StandardCharsets.UTF_8);
-        return new MsgEntry(entry, idxCounter + entryLen);
-    }
-
-    static MsgBytes readMessageBytesOffset(byte[] payload, int offset){
-        int idxCounter = offset;
-        int entryLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff);
-        byte[] entryBytes = Arrays.copyOfRange(payload, idxCounter, entryLen + idxCounter);
-        return new MsgBytes(entryBytes, idxCounter + entryLen);
-    }
-
-    static byte[] createConfirmationPayload(){
-        byte[] msg = {0};
-        return msg;
-    }
-
-    static byte[] intToByteArray(int value) {
-        return new byte[] {
-                (byte)(value >>> 24),
-                (byte)(value >>> 16),
-                (byte)(value >>> 8),
-                (byte)value};
-    }
-
-    static byte[] longToByteArray(long value) {
-        return new byte[] {
-                (byte)(value >>> 56),
-                (byte)(value >>> 48),
-                (byte)(value >>> 40),
-                (byte)(value >>> 32),
-                (byte)(value >>> 24),
-                (byte)(value >>> 16),
-                (byte)(value >>> 8),
-                (byte)value};
-    }
-
-    static long readLongAt(byte[] buf, int offset) {
-        long value = 0;
-        for (int i = 0; i < 8; i++) {
-            value = (value << 8) | (buf[offset + i] & 0xff);
-        }
-
-        return value;
-    }
 
 }
+

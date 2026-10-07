@@ -16,6 +16,7 @@
         <module>message-db</module>
         <module>mailing</module>
         <module>db-connection</module>
+        <module>server-helpers</module>
     </modules>
 
     <dependencyManagement>

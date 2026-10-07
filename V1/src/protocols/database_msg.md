@@ -1,10 +1,11 @@
-#### Key database 
+#### General message
 Message: (header - 5 bytes    body)
 [1 byte, msg type][4 bytes, msg len (big endian)][payload]
 
 Response: (header - 5 bytes   body)
 [1 byte status][4 bytes, msg len (big endian)][payload]
 
+#### Key database 
 Status codes:
 0x00 = OK
 0x01 = General error 

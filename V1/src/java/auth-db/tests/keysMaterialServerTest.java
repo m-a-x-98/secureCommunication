@@ -2,8 +2,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.securechat.serverhelpers.*;
 
-public class keysMaterialServerTest {
+
+class keysMaterialServerTest {
 
     @Test
     void testHelpers() throws Exception{
@@ -41,8 +43,8 @@ public class keysMaterialServerTest {
 
         MsgEntry result = MessageCodec.readMessageOffset(payload, 0);
 
-        assertEquals("ABC", result.entry);
-        assertEquals(5, result.end_pos); // 2 (length prefix) + 3 (entry bytes)
+        assertEquals("ABC", result.getEntry());
+        assertEquals(5, result.getEndPos()); // 2 (length prefix) + 3 (entry bytes)
     }
 
     @Test
@@ -52,8 +54,8 @@ public class keysMaterialServerTest {
 
         MsgEntry result = MessageCodec.readMessageOffset(payload, 1);
 
-        assertEquals("hi", result.entry);
-        assertEquals(5, result.end_pos);
+        assertEquals("hi", result.getEntry());
+        assertEquals(5, result.getEndPos());
     }
 
     @Test
@@ -62,11 +64,11 @@ public class keysMaterialServerTest {
         byte[] payload = new byte[]{0x00, 0x01, 'A', 0x00, 0x02, 'B', 'C'};
 
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
-        MsgEntry password = MessageCodec.readMessageOffset(payload, username.end_pos);
+        MsgEntry password = MessageCodec.readMessageOffset(payload, username.getEndPos());
 
-        assertEquals("A", username.entry);
-        assertEquals("BC", password.entry);
-        assertEquals(7, password.end_pos);
+        assertEquals("A", username.getEntry());
+        assertEquals("BC", password.getEntry());
+        assertEquals(7, password.getEndPos());
     }
 
     @Test
@@ -80,8 +82,8 @@ public class keysMaterialServerTest {
 
         MsgBytes result = MessageCodec.readMessageBytesOffset(payload, 0);
 
-        assertArrayEquals(rawKeyMaterial, result.entry);
-        assertEquals(2 + rawKeyMaterial.length, result.end_pos);
+        assertArrayEquals(rawKeyMaterial, result.getEntry());
+        assertEquals(2 + rawKeyMaterial.length, result.getEndPos());
     }
 
     @Test
