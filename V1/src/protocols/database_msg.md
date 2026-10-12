@@ -14,8 +14,22 @@ Status codes:
 Message types and payload
 Ping (0x01): empty
 Authentication (0x02):      [2 byte, username size in bytes][username][2 byte, pwd size bytes][password]
-Store key material (0x03):  [2 byte, username size in bytes][username][2 byte, key mat size bytes][key material]
+Store key material (0x03):  [2 byte, username size in bytes][username][8 byte, key mat size bytes][key material]
 Get key material (0x04):    [2 byte, username size in bytes][username]
 Update pad position (0x05): [2 byte, username size in bytes][username][offset, 8 bytes]
 Get pad position (0x06):    [2 byte, username size in bytes][username]
 Get pad size (0x07):        [2 byte, username size in bytes][username]
+
+#### Message database 
+Status codes:
+0x00 = OK 
+0x01 = General error 
+
+
+Ping (0x01): empty 
+Authentication (0x02):      [2 byte, username size in bytes][username][2 byte, pwd size bytes][password]
+Add message (0x03):        [4 byte, message size in bytes][message][8 byte, pad start][2 byte, username size in bytes][username][2 byte, recipient name size in bytes][recipient][8 byte timestamp]
+Retrive n previous messages (0x04)         [2 byte, username size][username][4 byte, number messages]
+Retrive message in time interval (0x05)    [2 byte, username size][username][8 byte start timestamp][8 byte end timestamp]
+
+Return message:        n times the following after each other [4 byte, message size in bytes][message][8 byte, pad start][2 byte, username size in bytes][username][2 byte, recipient name size in bytes][recipient][8 byte timestamp]

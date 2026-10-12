@@ -6,13 +6,13 @@ import java.util.Arrays;
 import com.securechat.serverhelpers.*;
 
 public class KeyMaterialServer {
-    private final AuthService authService;
+    private final KeysDB keysDB;
     private final int port;
     private ServerSocket serverSocket;
     private volatile boolean running = false;
 
-    public KeyMaterialServer(AuthService authService, int port) {
-        this.authService = authService;
+    public KeyMaterialServer(KeysDB keysDB, int port) {
+        this.keysDB = keysDB;
         this.port = port;
     }
 
@@ -89,14 +89,13 @@ public class KeyMaterialServer {
             byte[] passwordBytes = Arrays.copyOfRange(payload, idxCounter, idxCounter+passwordLen);
             String password = new String(passwordBytes, StandardCharsets.UTF_8);
 
-            if (!authService.verifyLogin(username, password)){
+            if (!keysDB.verifyLogin(username, password)){
                 throw new Exception();
             }
         } catch (Exception e){
             return null;
         }
         return username;
-
     }
 
     private byte[] fullfillRequest(int msgType, byte[] inPayload) throws Exception{
@@ -132,11 +131,11 @@ public class KeyMaterialServer {
     }
 
     private int storeKeyMaterialPayload(byte[] payload){
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
-        MsgBytes keyMaterial = MessageCodec.readMessageBytesOffset(payload, username.getEndPos());
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
+        MsgBytes keyMaterial = MessageCodec.readMessageBytesOffset(payload, username.getEndPos(), 8);
 
         try {
-            authService.storeEncryptedKeyMaterial(username.getEntry(), keyMaterial.getEntry());
+            keysDB.storeEncryptedKeyMaterial(username.getEntry(), keyMaterial.getEntry());
         } catch (Exception e){
             return 1;
         }
@@ -144,10 +143,10 @@ public class KeyMaterialServer {
     }
 
     private byte[] getKeyMaterialPayload(byte[] payload){
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
         byte[] encryptedKey;
         try {
-            encryptedKey = authService.getEncryptedKeyMaterial(username.getEntry());
+            encryptedKey = keysDB.getEncryptedKeyMaterial(username.getEntry());
         } catch (Exception e){
             return null;
         }
@@ -155,11 +154,11 @@ public class KeyMaterialServer {
     }
 
     private int updatePadPositionPayload(byte[] payload){
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
         long position = MessageCodec.readLongAt(payload, username.getEndPos());
 
         try {
-            authService.updatePadPosition(username.getEntry(), position);
+            keysDB.updatePadPosition(username.getEntry(), position);
         } catch (Exception e){
             return 1;
         }
@@ -167,10 +166,10 @@ public class KeyMaterialServer {
     }
 
     private byte[] getPadPositionPayload(byte[] payload){
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
         long padPos;
         try {
-            padPos = authService.getPadState(username.getEntry());
+            padPos = keysDB.getPadState(username.getEntry());
         } catch (Exception e){
             return null;
         }
@@ -178,10 +177,10 @@ public class KeyMaterialServer {
     }
 
     private byte[] getPadSizePayload(byte[] payload){
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
         long padSize;
         try {
-            padSize = authService.getPadSize(username.getEntry());
+            padSize = keysDB.getPadSize(username.getEntry());
         } catch (Exception e){
             return null;
         }

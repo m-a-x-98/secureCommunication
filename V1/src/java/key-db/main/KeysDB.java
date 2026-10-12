@@ -7,7 +7,8 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 
 import com.securechat.dbconnection.ConnectionProvider;
 import com.securechat.dbconnection.SingleConnectionProvider;
-import com.securechat.serverhelpers.*;
+import com.securechat.serverhelpers.Exceptions.*;
+import com.securechat.authService.AuthService;
 
 public class KeysDB implements AuthService{
     private ConnectionProvider dbProvider;

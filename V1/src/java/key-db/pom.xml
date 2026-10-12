@@ -5,7 +5,7 @@
         <artifactId>secure-chat-parent</artifactId>
         <version>1.0.0</version>
     </parent>
-    <artifactId>auth-db</artifactId>
+    <artifactId>key-db</artifactId>
 
     <build>
         <sourceDirectory>main</sourceDirectory>
@@ -20,6 +20,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.secure-chat</groupId>
+            <artifactId>auth-service</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.secure-chat</groupId>

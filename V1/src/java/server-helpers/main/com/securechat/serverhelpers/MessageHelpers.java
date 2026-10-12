@@ -1,7 +1,6 @@
 package com.securechat.serverhelpers;
 
 import java.io.*;
-import java.net.*;
 
 public class MessageHelpers {
     public static final void sendMsg(int status, byte[] payload, DataOutputStream out) throws IOException{

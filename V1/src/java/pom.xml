@@ -12,8 +12,9 @@
     </properties>
 
     <modules>
-        <module>auth-db</module>
+        <module>auth-service</module>
         <module>message-db</module>
+        <module>key-db</module>
         <module>mailing</module>
         <module>db-connection</module>
         <module>server-helpers</module>

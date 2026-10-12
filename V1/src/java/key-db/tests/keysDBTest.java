@@ -2,7 +2,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.securechat.serverhelpers.*;
+import com.securechat.serverhelpers.Exceptions.*;
 
 class keysDBTest {
 

@@ -41,7 +41,7 @@ class keysMaterialServerTest {
         // [2 bytes len=3]['A','B','C']
         byte[] payload = new byte[]{0x00, 0x03, 'A', 'B', 'C'};
 
-        MsgEntry result = MessageCodec.readMessageOffset(payload, 0);
+        MsgEntry result = MessageCodec.readMessageOffset(payload, 0, 2);
 
         assertEquals("ABC", result.getEntry());
         assertEquals(5, result.getEndPos()); // 2 (length prefix) + 3 (entry bytes)
@@ -52,7 +52,7 @@ class keysMaterialServerTest {
         // leading junk byte, then [2 bytes len=2]['h','i']
         byte[] payload = new byte[]{(byte) 0xFF, 0x00, 0x02, 'h', 'i'};
 
-        MsgEntry result = MessageCodec.readMessageOffset(payload, 1);
+        MsgEntry result = MessageCodec.readMessageOffset(payload, 1, 2);
 
         assertEquals("hi", result.getEntry());
         assertEquals(5, result.getEndPos());
@@ -63,8 +63,8 @@ class keysMaterialServerTest {
         // username: [len=1]['A'], then password: [len=2]['B','C']
         byte[] payload = new byte[]{0x00, 0x01, 'A', 0x00, 0x02, 'B', 'C'};
 
-        MsgEntry username = MessageCodec.readMessageOffset(payload, 0);
-        MsgEntry password = MessageCodec.readMessageOffset(payload, username.getEndPos());
+        MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
+        MsgEntry password = MessageCodec.readMessageOffset(payload, username.getEndPos(), 2);
 
         assertEquals("A", username.getEntry());
         assertEquals("BC", password.getEntry());
@@ -80,7 +80,7 @@ class keysMaterialServerTest {
         payload[1] = (byte) rawKeyMaterial.length;
         System.arraycopy(rawKeyMaterial, 0, payload, 2, rawKeyMaterial.length);
 
-        MsgBytes result = MessageCodec.readMessageBytesOffset(payload, 0);
+        MsgBytes result = MessageCodec.readMessageBytesOffset(payload, 0, 2);
 
         assertArrayEquals(rawKeyMaterial, result.getEntry());
         assertEquals(2 + rawKeyMaterial.length, result.getEndPos());

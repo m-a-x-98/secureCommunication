@@ -1,6 +1,4 @@
-package com.securechat.serverhelpers;
-
-import java.io.IOException;
+package com.securechat.serverhelpers.Exceptions;
 
 public class UserDoesntExistException extends Exception{
     public UserDoesntExistException() {}
