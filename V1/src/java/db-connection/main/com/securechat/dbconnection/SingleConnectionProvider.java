@@ -2,9 +2,8 @@ package com.securechat.dbconnection;
 
 import java.sql.SQLException;
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 
 public class SingleConnectionProvider implements ConnectionProvider {
@@ -20,9 +19,13 @@ public class SingleConnectionProvider implements ConnectionProvider {
             new Class<?>[]{Connection.class},
             (proxy, method, args) -> {
                 if (method.getName().equals("close")) {
-                    return null; // no-op — don't actually close the shared connection
+                    return null; // no-op — don't close the shared connection
                 }
-                return method.invoke(connection, args);
+                try {
+                    return method.invoke(connection, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();   // the real SQLException, so catch (SQLException e) works
+                }
             }
         );
     }

@@ -20,8 +20,18 @@ public class KeyMaterialServer {
         serverSocket = new ServerSocket(port, 50, InetAddress.getByName("127.0.0.1"));
         running = true;
         while (running) {
-            Socket client = serverSocket.accept();
-            handleConnection(client); // single-threaded for now, one C++ client at a time
+            Socket client;
+            try {
+                client = serverSocket.accept();
+            } catch (SocketException e) {
+                if (!running) break;   // stop() closed the socket: normal shutdown
+                throw e;
+            }
+            try {
+                handleConnection(client);
+            } catch (RuntimeException e) {
+                System.err.println("Connection failed: " + e);
+            }
         }
     }
 
@@ -51,9 +61,11 @@ public class KeyMaterialServer {
 
             while (!client.isClosed()) {
                 int msgType = in.readUnsignedByte();
-                int payloadLen = in.readInt();
-                byte[] inPayload = new byte[payloadLen];
-                in.readFully(inPayload);
+                byte[] inPayload = MessageHelpers.readPayload(in);
+                if (inPayload == null) {
+                    MessageHelpers.writeError(out);
+                    return;               // stream is out of sync: close the connection
+                }
 
                 try {
                     byte[] outPayload = fullfillRequest(msgType, inPayload);
@@ -72,30 +84,21 @@ public class KeyMaterialServer {
     }
 
     private String authenticateAndGetUsername(DataInputStream in, DataOutputStream out){
-        String username;
         try{
             int payloadLen = in.readInt();
 
             byte[] payload = new byte[payloadLen];
             in.readFully(payload);
 
-            int idxCounter = 0;
-            int usernameLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff); // 2 first bytes are username len
-            byte[] usernameBytes = Arrays.copyOfRange(payload, idxCounter, usernameLen+idxCounter);
-            username = new String(usernameBytes, StandardCharsets.UTF_8);
-            idxCounter += usernameLen;
+            MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
+            MsgEntry password = MessageCodec.readMessageOffset(payload, username.getEndPos(), 2);
 
-            int passwordLen = ((payload[idxCounter++] & 0xff) << 8) | (payload[idxCounter++] & 0xff);
-            byte[] passwordBytes = Arrays.copyOfRange(payload, idxCounter, idxCounter+passwordLen);
-            String password = new String(passwordBytes, StandardCharsets.UTF_8);
-
-            if (!keysDB.verifyLogin(username, password)){
-                throw new Exception();
-            }
+            return keysDB.verifyLogin(username.getEntry(), password.getEntry())
+                ? username.getEntry()
+                : null;
         } catch (Exception e){
             return null;
         }
-        return username;
     }
 
     private byte[] fullfillRequest(int msgType, byte[] inPayload) throws Exception{

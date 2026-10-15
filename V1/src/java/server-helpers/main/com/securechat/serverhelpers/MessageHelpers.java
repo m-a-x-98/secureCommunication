@@ -3,6 +3,8 @@ package com.securechat.serverhelpers;
 import java.io.*;
 
 public class MessageHelpers {
+    private static final int MAX_PAYLOAD = 16 * 1024 * 1024;
+
     public static final void sendMsg(int status, byte[] payload, DataOutputStream out) throws IOException{
         out.writeByte(status);
         out.writeInt(payload.length);
@@ -35,5 +37,13 @@ public class MessageHelpers {
             return 1;
         }
         return 0;
-    }    
+    }
+
+    public static byte[] readPayload(DataInputStream in) throws IOException {
+        int payloadLen = in.readInt();
+        if (payloadLen < 0 || payloadLen > MAX_PAYLOAD) return null;
+        byte[] payload = new byte[payloadLen];
+        in.readFully(payload);
+        return payload;
+    }
 }

@@ -9,9 +9,11 @@ import java.sql.Timestamp;
 import com.securechat.authService.AuthService;
 import com.securechat.serverhelpers.*;
 
+
 public class MessageServer {
+    private static final int MAX_COUNT = 1000;
+
     private AuthService authService;
-    private static final int MAX_PAYLOAD = 16 * 1024 * 1024;
 
     private final MessageDB messageDB;
     private final int port;
@@ -28,8 +30,18 @@ public class MessageServer {
         serverSocket = new ServerSocket(port, 50, InetAddress.getByName("127.0.0.1"));
         running = true;
         while (running) {
-            Socket client = serverSocket.accept();
-            handleConnection(client); // single-threaded for now, one C++ client at a time
+            Socket client;
+            try {
+                client = serverSocket.accept();
+            } catch (SocketException e) {
+                if (!running) break;   // stop() closed the socket: normal shutdown
+                throw e;
+            }
+            try {
+                handleConnection(client);
+            } catch (RuntimeException e) {
+                System.err.println("Connection failed: " + e);
+            }
         }
     }
 
@@ -58,10 +70,11 @@ public class MessageServer {
 
             while (!client.isClosed()) {
                 int msgType = in.readUnsignedByte();
-                int payloadLen = Math.min(in.readInt(), MAX_PAYLOAD);
-                if (payloadLen < 0) continue;
-                byte[] inPayload = new byte[payloadLen];
-                in.readFully(inPayload);
+                byte[] inPayload = MessageHelpers.readPayload(in);
+                if (inPayload == null) {
+                    MessageHelpers.writeError(out);
+                    return;               // stream is out of sync: close the connection
+                }
 
                 try {
                     byte[] outPayload = fulfillRequest(msgType, inPayload);
@@ -94,10 +107,10 @@ public class MessageServer {
                 else outPayload = MessageCodec.createConfirmationPayload();  
                 break;
             case 0x04:
-                outPayload = listMessagesToPayload(getNMessagesPayload(inPayload));
+                outPayload = MessageCodec.listMessagesToPayload(getNMessagesPayload(inPayload));
                 break;
             case 0x05:
-                outPayload = listMessagesToPayload(getMessagesTimePayload(inPayload));
+                outPayload = MessageCodec.listMessagesToPayload(getMessagesTimePayload(inPayload));
                 break;
         
             default:
@@ -106,25 +119,6 @@ public class MessageServer {
         return outPayload;
     }
 
-    private byte[] listMessagesToPayload(List<UserMessage> messages) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(buffer);
-
-        out.writeInt(messages.size());                          // [4 count]
-        for (UserMessage msg : messages) {
-            out.writeInt(msg.message.length);                   // [4 size]
-            out.write(msg.message);                             // [ciphertext]
-            out.writeLong(msg.padStartOffset);                  // [8 pad start]
-            writeName(out, msg.user);                           // [2 size][sender]
-            writeName(out, msg.recipient);                      // [2 size][recipient]
-            out.writeLong(msg.time.getTime());                  // [8 epoch ms]
-
-            if (buffer.size() > MAX_PAYLOAD) {                  // clamp the response size
-                throw new IllegalArgumentException("Response too large");
-            }
-        }
-        return buffer.toByteArray();
-    }
 
     private String authenticateAndGetUsername(DataInputStream in, DataOutputStream out){
         String username;
@@ -153,29 +147,21 @@ public class MessageServer {
         return username;
     }
 
-    private static void writeName(DataOutputStream out, String name) throws IOException {
-        byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > 0xFFFF) {                            // clamp to the 2-byte field
-            throw new IllegalArgumentException("Name too long");
-        }
-        out.writeShort(bytes.length);
-        out.write(bytes);
-    }
+
 
     private List<UserMessage> getNMessagesPayload(byte[] payload) throws RuntimeException{
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
-        int position = MessageCodec.readInt32At(payload, username.getEndPos());
-        List<UserMessage> messages;
-
-        messages = messageDB.getNMessages(username.getEntry(), position);
-        
-        return messages;
+        int count = MessageCodec.readInt32At(payload, username.getEndPos());   // was "position"
+        if (count < 1 || count > MAX_COUNT) {
+            throw new IllegalArgumentException("Bad message count: " + count);
+        }
+        return messageDB.getNMessages(username.getEntry(), count);
     }
 
     private List<UserMessage> getMessagesTimePayload(byte[] payload) throws RuntimeException{
         MsgEntry username = MessageCodec.readMessageOffset(payload, 0, 2);
         Timestamp startTime = MessageCodec.readTimestampAt(payload, username.getEndPos());
-        Timestamp endTime = MessageCodec.readTimestampAt(payload, 8);
+        Timestamp endTime = MessageCodec.readTimestampAt(payload, username.getEndPos() + 8);
         List<UserMessage> messages;
 
         messages = messageDB.getMessagesTime(username.getEntry(), 

@@ -1,5 +1,4 @@
 #include "encryptionEngine.hpp"
-#include "doctest.h"
 #include "exceptions.hpp"
 
 void perfectEncrypt(Message& msg, ByteBuffer& key){

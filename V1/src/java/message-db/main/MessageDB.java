@@ -8,9 +8,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.sql.Types;
+import java.time.LocalDateTime;
 
 import com.securechat.dbconnection.ConnectionProvider;
 import com.securechat.dbconnection.SingleConnectionProvider;
+import com.securechat.serverhelpers.MessageCodec;
+import com.securechat.serverhelpers.UserMessage;
 
 public class MessageDB{
     private ConnectionProvider dbProvider;
@@ -35,7 +39,8 @@ public class MessageDB{
     }
 
     public List<UserMessage> getNMessages(String username, int count){
-        String sql = "SELECT * FROM messages WHERE usrname = ? ORDER BY send_at DESC LIMIT ?";
+        String sql = "SELECT * FROM messages WHERE usrname = ? OR recipient = ? " +
+                     "ORDER BY send_at DESC, id DESC LIMIT ?";
         List<UserMessage> messages = new ArrayList<UserMessage>();
 
         try (Connection usrDB = dbProvider.getConnection();
@@ -50,7 +55,7 @@ public class MessageDB{
                                                  result.getLong("pad_start_offset"),
                                                  result.getString("usrname"),
                                                  result.getString("recipient"),
-                                                 result.getTimestamp("send_at")));
+                                                 MessageCodec.fromUtc(result.getObject("send_at", LocalDateTime.class))));
                 }
             }
 
@@ -60,18 +65,19 @@ public class MessageDB{
         return messages;
     }
     public List<UserMessage> getMessagesTime(String username, Timestamp startDate, Timestamp endDate, int limit){
-        String sql;
-        if (limit != 0) sql = "SELECT * FROM messages WHERE usrname = ? AND send_at >= ? AND send_at <= ? ORDER BY send_at DESC LIMIT ?";
-        else sql = "SELECT * FROM messages WHERE usrname = ? AND send_at >= ? AND send_at <= ? ORDER BY send_at DESC";
+        String sql = "SELECT * FROM messages WHERE (usrname = ? OR recipient = ?) " +
+             "AND send_at >= ? AND send_at <= ? ORDER BY send_at DESC, id DESC" +
+             (limit != 0 ? " LIMIT ?" : "");
         List<UserMessage> messages = new ArrayList<UserMessage>();
 
         try (Connection usrDB = dbProvider.getConnection();
             PreparedStatement stmt = usrDB.prepareStatement(sql)) {
 
             stmt.setString(1, username);
-            stmt.setTimestamp(2, startDate);
-            stmt.setTimestamp(3, endDate);
-            if (limit != 0) stmt.setInt(4, limit);
+            stmt.setString(2, username);
+            stmt.setObject(3, MessageCodec.toUtc(startDate));
+            stmt.setObject(4, MessageCodec.toUtc(endDate));
+            if (limit != 0) stmt.setInt(5, limit);
 
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()){
@@ -79,7 +85,7 @@ public class MessageDB{
                                                  result.getLong("pad_start_offset"),
                                                  result.getString("usrname"),
                                                  result.getString("recipient"),
-                                                 result.getTimestamp("send_at")));
+                                                 MessageCodec.fromUtc(result.getObject("send_at", LocalDateTime.class))));
                 }
             }
 
@@ -90,7 +96,8 @@ public class MessageDB{
     }
 
     public void addMessage(UserMessage msg){
-        String sql = "INSERT INTO messages (msg, pad_start_offset, usrname, recipient) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO messages (msg, pad_start_offset, usrname, recipient, send_at) " +
+                     "VALUES (?, ?, ?, ?, COALESCE(?, now() AT TIME ZONE 'utc'))";
 
         try (Connection usrDB = dbProvider.getConnection();
             PreparedStatement stmt = usrDB.prepareStatement(sql)) {
@@ -99,6 +106,7 @@ public class MessageDB{
             stmt.setLong(2, msg.padStartOffset);
             stmt.setString(3, msg.user);
             stmt.setString(4, msg.recipient);
+            stmt.setObject(5, msg.time == null ? null : MessageCodec.toUtc(msg.time), Types.TIMESTAMP);
 
             stmt.executeUpdate();
         } catch (SQLException e) {

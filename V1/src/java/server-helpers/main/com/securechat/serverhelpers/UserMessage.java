@@ -1,3 +1,5 @@
+package com.securechat.serverhelpers;
+
 import java.sql.Timestamp;
 
 public class UserMessage {

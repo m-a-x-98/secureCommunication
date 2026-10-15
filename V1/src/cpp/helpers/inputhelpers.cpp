@@ -11,7 +11,10 @@ int _get_key_len(std::istream& in, bool use_presets) {
                     "(3) 100 000 characters\n or type your own amount\n";
     int selection;
     while (true) {
-        if (in >> selection && selection > 0) break;
+        if (in >> selection && selection > 0) {
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            break;
+        }
         std::cout << "Invalid input (must be a whole number larger than 0)\n";
         in.clear();
         in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -76,7 +79,10 @@ std::unique_ptr<IencryptionService> _get_encryptor(std::istream& in, std::string
     int selection;
     std::cout<<"Select preferred encryption method:\n (1) AES-256-GCM\n";
     while (true){
-        if (in >> selection && selection >=1 && selection < 2) break;
+        if (in >> selection && selection >=1 && selection < 2) {
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            break;
+        }
         std::cout<<"Invalid input\n";
         in.clear();
         in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

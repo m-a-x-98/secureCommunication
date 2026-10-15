@@ -1,7 +1,6 @@
 #include "encryptionService.hpp"
 #include "encryptionEngine.hpp"
 #include "inputhelpers.hpp"
-#include "doctest.h"
 #include "sodium.h"
 #include "types.hpp"
 
