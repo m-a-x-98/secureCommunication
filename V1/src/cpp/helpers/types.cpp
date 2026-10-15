@@ -1,5 +1,7 @@
 #include "types.hpp"
 
+#include <string>
+
 Message::Message() : data(new char[1]{'\0'}), len(0), encryption_index(0) {}
 Message::Message(const char* str) : encryption_index(0){
     len = str ? std::strlen(str) : 0;
@@ -84,3 +86,9 @@ bool Message::equals(Message& msg) const{
 char* Message::toString() const {
     return data;
 }
+
+
+UserMessage::UserMessage(ByteBuffer msg, std::string usrname, std::string recipient, long pad_start_offset) : msg(msg),
+                                                                                                   usrname(usrname),
+                                                                                                   recipient(recipient),
+                                                                                                   pad_start_offset(pad_start_offset){}

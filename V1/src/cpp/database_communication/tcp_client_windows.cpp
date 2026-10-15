@@ -6,6 +6,7 @@
 #include "tcp_client_windows.hpp"
 #include "message_builders.hpp"
 #include "types.hpp"
+#include "exceptions.hpp"
 
 
 
@@ -21,6 +22,7 @@ TCP_client_windows::TCP_client_windows(std::string& dest_ip, u_short port) : por
     int iResult = WSAStartup(MAKEWORD(2, 2), &wsa_data);
     if (iResult != NO_ERROR) {
         wprintf(L"WSAStartup function failed with error: %d\n", iResult);
+        throw TCPClientException("");
         // return 1;
     }
     // Connect to a socket
@@ -28,6 +30,7 @@ TCP_client_windows::TCP_client_windows(std::string& dest_ip, u_short port) : por
     if (connectsocket == INVALID_SOCKET) {
         wprintf(L"socket function failed with error: %ld\n", WSAGetLastError());
         WSACleanup();
+        throw TCPClientException("");
         // return 1;
     }
 }
@@ -52,10 +55,6 @@ int TCP_client_windows::tcp_connect(const std::string& usr_name, const std::stri
     int iResult = connect(connectsocket, (SOCKADDR*) & clientService, sizeof (clientService));
     if (iResult == SOCKET_ERROR) {
         wprintf(L"connect function failed with error: %ld\n", WSAGetLastError());
-        iResult = closesocket(connectsocket);
-        if (iResult == SOCKET_ERROR)
-            wprintf(L"closesocket function failed with error: %ld\n", WSAGetLastError());
-        WSACleanup();
         return 1;
     }
     // Server is now connected, time to authenticate the user

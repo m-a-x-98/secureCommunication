@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <ctime>
 
 #include "types.hpp"
 
@@ -30,21 +31,44 @@ inline void appendBytes(ByteBuffer& buf, const ByteBuffer& data) {
     buf.insert(buf.end(), data.begin(), data.end());
 }
 
-inline void appendString(ByteBuffer& buf, const std::string& s) {
+inline void appendString16(ByteBuffer& buf, const std::string& s) {
     appendUint16(buf, s.size()); // add the string size
     buf.insert(buf.end(), s.begin(), s.end());
 }
 
-inline void appendByteBuffer(ByteBuffer& buf, const ByteBuffer& s){
+inline void appendString32(ByteBuffer& buf, const std::string& s) {
+    appendUint32(buf, s.size()); // add the string size
+    buf.insert(buf.end(), s.begin(), s.end());
+}
+
+inline void appendString64(ByteBuffer& buf, const std::string& s) {
+    appendUint64(buf, s.size()); // add the string size
+    buf.insert(buf.end(), s.begin(), s.end());
+}
+
+inline void appendByteBuffer16(ByteBuffer& buf, const ByteBuffer& s){
     appendUint16(buf, s.size()); // add the ByteBuffer size
+    buf.insert( buf.end(), s.begin(), s.end() );
+}
+
+inline void appendByteBuffer32(ByteBuffer& buf, const ByteBuffer& s){
+    appendUint32(buf, s.size()); // add the ByteBuffer size
+    buf.insert( buf.end(), s.begin(), s.end() );
+}
+
+inline void appendByteBuffer64(ByteBuffer& buf, const ByteBuffer& s){
+    appendUint64(buf, s.size()); // add the ByteBuffer size
     buf.insert( buf.end(), s.begin(), s.end() );
 }
 
 ByteBuffer buildPingMessage();
 ByteBuffer buildAuthenticateMessage(const std::string& username, const std::string& password);
 ByteBuffer buildStoreKeyMessage(const std::string& username, const ByteBuffer& key_material);
-ByteBuffer buildStoreKeyMessage(const std::string& username, const std::string& key_material);
 ByteBuffer buildGetKeyMessage(const std::string& username);
 ByteBuffer buildUpdatePosMessage(const std::string& username, const uint64_t offset);
 ByteBuffer buildGetPosMessage(const std::string& username);
 ByteBuffer buildGetPadSizeMessage(const std::string& username);
+
+ByteBuffer buildAddUsrMessage(const UserMessage message);
+ByteBuffer buildGetNUsrMessage(const std::string& username, const int numb);
+ByteBuffer buildGetUserMessageTime(const std::string& username, std::time_t start_time, std::time_t end_time);

@@ -14,12 +14,10 @@ TEST_CASE("perfectEncrypt/perfectDecrypt check"){
     for (const char* test : tests) {
         Message msg = Message(test);
 
+        ByteBuffer buf(msg.get_len(), 0x01);
 
-        // This tests need rework 
-
-
-        perfectEncrypt(msg, ByteBuffer({0x01,0x02}));
-        perfectDecrypt(msg, ByteBuffer({0x01,0x02}));
+        perfectEncrypt(msg, buf);
+        perfectDecrypt(msg, buf);
         CHECK(msg.equals_string(test));
     }
 }

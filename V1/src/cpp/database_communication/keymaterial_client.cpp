@@ -1,7 +1,5 @@
 #include "keymaterial_client.hpp"
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
 #include <memory>
 #include <stdexcept>
 
@@ -60,6 +58,12 @@ uint64_t KeyMaterialClient::getPadSize(){
     return key_len;
 }
 
+int KeyMaterialClient::pingDB(){
+    ByteBuffer msg = buildPingMessage();
+    ByteBuffer outmsg = sendAndReceive(msg);
+    return outmsg[0];
+}
+
 
 ByteBuffer KeyMaterialClient::sendAndReceive(const ByteBuffer& request){
     if (client->send_msg(request) != 0) {
@@ -74,7 +78,7 @@ ByteBuffer KeyMaterialClient::sendAndReceive(const ByteBuffer& request){
     }
 
     // Handle errors
-    if (response[0] == 0x01) {
+    if (response[0] != 0x00) {
         throw std::runtime_error("Got an error back");
     }
 

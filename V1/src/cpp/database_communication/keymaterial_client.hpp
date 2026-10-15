@@ -41,6 +41,8 @@ public:
 
     uint64_t getPadSize();
 
+    int pingDB();
+
 private:
     std::unique_ptr<TCP_client> client;
     std::string username;

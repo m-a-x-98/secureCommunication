@@ -3,6 +3,7 @@
 #include <cstring>
 #include <vector>
 #include <cstdint>
+#include <string>
 
 using ByteBuffer = std::vector<uint8_t>;
 
@@ -10,7 +11,6 @@ using ByteBuffer = std::vector<uint8_t>;
 class Message{
     char* data;
     size_t len;
-    size_t pad_start_offset;
 
 public:
     int encryption_index;
@@ -52,4 +52,14 @@ public:
     size_t get_len() const;
 
     char* toString() const;
+};
+
+class UserMessage{
+public:
+    ByteBuffer msg;
+    std::string usrname;
+    std::string recipient;
+    long pad_start_offset;
+
+    UserMessage(ByteBuffer msg, std::string usrname, std::string recipient, long pad_start_offset);
 };

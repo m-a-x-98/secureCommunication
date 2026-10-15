@@ -73,11 +73,12 @@ void perfectEncryption::encrypt(Message& msg){
     perfectEncrypt(msg, pad_slice);
 }
 void perfectEncryption::decrypt(Message& msg){
-    perfectDecrypt(msg, ByteBuffer());
+    ByteBuffer buf = {0x01}; // need to acctual put the key here
+    perfectDecrypt(msg, buf);
 }
 
 ByteBuffer perfectEncryption::read_pad_slice(size_t start_offset, size_t slice_len){
-    return ByteBuffer(key.begin() + start_offset, key.end() + start_offset + slice_len);
+    return ByteBuffer(key.begin() + start_offset, key.begin() + start_offset + slice_len);
 }
 
 std::string perfectEncryption::get_usr_name() const{
