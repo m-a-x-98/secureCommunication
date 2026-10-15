@@ -26,6 +26,7 @@ target_sources(test_main PRIVATE
     tests/inputhelpers_tests.cpp
     tests/helpers_tests.cpp
     tests/database_communication_tests.cpp
+    tests/paddallocator_tests.cpp
     encryption/encryptionService.cpp
     encryption/encryptionEngine.cpp
     helpers/inputhelpers.cpp
